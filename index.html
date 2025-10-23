@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>🎲 Multi-Player Dice Game (JS)</title>
-  <style>
-    body { font-family: Arial; text-align: center; background: #f4f7fb; padding: 30px; }
-    button { padding: 10px 16px; margin: 10px; font-size: 15px; border-radius: 8px; border:none; background:#4CAF50; color:white; cursor:pointer;}
-    button:disabled { background:#aaa; cursor:default; }
-    table { margin:16px auto; border-collapse: collapse; }
-    th, td { border:1px solid #ccc; padding:8px 12px; }
-    th { background:#eee; }
-    #log { margin-top:12px; max-height:140px; overflow:auto; text-align:left; font-size:13px; background:#fff; padding:8px; border-radius:6px; width:360px; margin:auto;}
-  </style>
+<meta charset="UTF-8">
+<title>🎲 Multi-Player Dice Game</title>
+<style>
+  body { font-family: Arial; text-align: center; background: #f0f4f8; padding: 30px; }
+  h1 { color: #333; }
+  .btn { padding:10px 16px; margin: 6px; font-size: 15px; border-radius:8px; border:none; background:#4CAF50; color:white; cursor:pointer; transition: 0.2s;}
+  .btn:hover { background:#45a049; }
+  .btn:disabled { background:#aaa; cursor:default; }
+  table { margin:16px auto; border-collapse: collapse; min-width:240px; }
+  th, td { border:1px solid #ccc; padding:8px 12px; }
+  th { background:#eee; }
+  #log { margin-top:12px; max-height:140px; overflow:auto; text-align:left; font-size:13px; background:#fff; padding:8px; border-radius:6px; width:360px; margin:auto; }
+  #diceFace { font-size: 80px; margin: 20px; transition: transform 0.2s; display:inline-block;}
+</style>
 </head>
 <body>
-  <h1>🎲 Multi-Player Dice Game</h1>
+<h1>🎲 Multi-Player Dice Game</h1>
 
-  <div id="setup">
-    <label>Players (2-4): <input id="playerCount" type="number" min="2" max="4" value="2"></label>
-    <label>Rounds: <input id="roundCount" type="number" min="1" max="20" value="5"></label>
-    <button id="startBtn">Start Game</button>
-  </div>
+<div id="setup">
+  <label>Players (2-4): <input id="playerCount" type="number" min="2" max="4" value="2"></label>
+  <label>Rounds: <input id="roundCount" type="number" min="1" max="20" value="5"></label>
+  <button class="btn" id="startBtn">Start Game</button>
+</div>
 
-  <div id="game" style="display:none;">
-    <h3 id="status">Status</h3>
-    <button id="rollBtn">Roll Dice</button>
-    <button id="resetBtn">Reset</button>
-    <table id="scoreTable"></table>
-    <div id="log"></div>
-  </div>
+<div id="game" style="display:none;">
+  <h3 id="status">Status</h3>
+  <div id="diceFace">🎲</div>
+  <br>
+  <button class="btn" id="rollBtn">Roll Dice</button>
+  <button class="btn" id="resetBtn">Reset</button>
+  <table id="scoreTable"></table>
+  <div id="log"></div>
+</div>
 
 <script>
 let players=[], scores=[], rounds=5, currentRound=1, currentPlayer=0, gameActive=false;
@@ -39,6 +44,9 @@ const resetBtn=document.getElementById('resetBtn');
 const statusEl=document.getElementById('status');
 const tableEl=document.getElementById('scoreTable');
 const logEl=document.getElementById('log');
+const diceFace=document.getElementById('diceFace');
+
+const diceEmojis=["","⚀","⚁","⚂","⚃","⚄","⚅"];
 
 function log(msg){ const line=document.createElement('div'); line.textContent=msg; logEl.prepend(line); }
 
@@ -61,11 +69,20 @@ startBtn.onclick=()=>{
 
 resetBtn.onclick=()=>{ location.reload(); };
 
-function rollDice(){ return Math.floor(Math.random()*6)+1; }
+function rollDice(){
+  return Math.floor(Math.random()*6)+1;
+}
+
+function animateDice(value){
+  diceFace.style.transform="rotate(360deg)";
+  diceFace.textContent=diceEmojis[value];
+  setTimeout(()=>{diceFace.style.transform="rotate(0deg)";},200);
+}
 
 rollBtn.onclick=()=>{
   if(!gameActive) return;
   const rollValue=rollDice();
+  animateDice(rollValue);
   scores[currentPlayer]+=rollValue;
   log(`${players[currentPlayer]} rolled a ${rollValue} (Round ${currentRound})`);
 
@@ -73,7 +90,7 @@ rollBtn.onclick=()=>{
     log(`${players[currentPlayer]} gets an extra chance!`);
     updateStatus();
     updateTable();
-    return;
+    return; // same player continues
   }
 
   currentPlayer++;
@@ -82,11 +99,15 @@ rollBtn.onclick=()=>{
   if(currentRound>rounds){ endGame(); } else { updateStatus(); updateTable(); }
 };
 
-function updateStatus(){ statusEl.textContent=gameActive ? `Round ${currentRound} - ${players[currentPlayer]}'s turn` : 'Game not started'; }
+function updateStatus(){ 
+  statusEl.textContent=gameActive ? `Round ${currentRound} - ${players[currentPlayer]}'s turn` : 'Game not started'; 
+}
 
 function updateTable(){
   let html='<tr><th>Player</th><th>Score</th></tr>';
-  players.forEach((p,i)=>{ html+=`<tr><td>${p}</td><td>${scores[i]}</td></tr>`; });
+  players.forEach((p,i)=>{
+    html+=`<tr${scores[i]===Math.max(...scores)?' style="background:#d4edda"':''}><td>${p}</td><td>${scores[i]}</td></tr>`;
+  });
   tableEl.innerHTML=html;
 }
 
